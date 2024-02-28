@@ -132,9 +132,6 @@ def reduce_dimensions(data, n_components=2):
     return reduced_data
 
 
-
-
-
 def main():
     customer_profiles, ad_events, ad_details = getCsvFiles()
 
