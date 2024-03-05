@@ -135,14 +135,9 @@ def reduce_dimensions(data, n_components=2):
 def main():
     customer_profiles, ad_events, ad_details = getCsvFiles()
 
-    # Adjusting column configuration as per your data
-    numeric_columns = ["age", "income"]  # Assuming 'age' and 'income' are numeric
-    categorical_columns = [
-        "gender",
-        "ever_married",
-        "home_state",  # Assuming these are categorical
-        # Add other categorical columns if applicable
-    ]
+    # Your column configurations
+    numeric_columns = ["age", "income"]
+    categorical_columns = ["gender", "ever_married", "home_state"]
 
     # Process the data
     processed_customer_profiles = encodeAndScaleData(
@@ -157,7 +152,6 @@ def main():
     best_eps, eps_score = find_optimal_eps(processed_customer_profiles, 5, eps_values)
     print(f"Best Eps: {best_eps} with Silhouette Score: {eps_score}")
 
-    # Test various min_samples values with the best eps
     if best_eps is not None:
         best_min_samples, min_samples_score = find_optimal_min_samples(
             processed_customer_profiles, best_eps, min_samples_values
@@ -173,30 +167,26 @@ def main():
 
             if len(cluster_labels) == len(customer_profiles):
                 customer_profiles["Cluster"] = cluster_labels
-
-                # Count the number of clusters
                 unique_clusters = np.unique(cluster_labels)
-                # Exclude noise if present
                 num_clusters = len(unique_clusters) - (
                     1 if -1 in unique_clusters else 0
                 )
                 print(f"Number of clusters: {num_clusters}")
 
-                # Identify the three largest clusters
+                # Define how many top clusters to export
+                top_clusters_to_export = 25  # Change this number as needed
+
+                # Identify the largest clusters
                 cluster_sizes = customer_profiles["Cluster"].value_counts()
-                # Exclude noise (cluster label -1) if present
                 cluster_sizes = cluster_sizes[cluster_sizes.index != -1]
-                largest_clusters = cluster_sizes.nlargest(3).index
+                largest_clusters = cluster_sizes.nlargest(top_clusters_to_export).index
 
-                # Reduce dimensions for visualization
                 reduced_data = reduce_dimensions(processed_customer_profiles)
-
-                # Plot a subset of clusters for analysis (e.g., largest clusters)
                 plot_clusters(
                     reduced_data, cluster_labels, clusters_to_plot=largest_clusters
                 )
 
-                # Filter and export data for each of the three largest clusters
+                # Export data for each of the largest clusters
                 for cluster in largest_clusters:
                     cluster_data = customer_profiles[
                         customer_profiles["Cluster"] == cluster
@@ -205,9 +195,7 @@ def main():
                     cluster_data.to_csv(filename, index=False)
                     print(f"Data for Cluster {cluster} exported to {filename}")
             else:
-                print(
-                    "Error: Mismatch in the number of cluster labels and the number of rows in the DataFrame."
-                )
+                print("Error: Mismatch in number of cluster labels and DataFrame rows.")
     else:
         print("No suitable eps value found.")
 
